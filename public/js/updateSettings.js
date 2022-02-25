@@ -22,7 +22,6 @@ export const updateSettings = async (data, type) => {
       const navUserPhoto = document.querySelector('.nav__user-img');
 
       showAlert('success', `${type.toUpperCase()} updated successfully!`);
-      console.log('some data updated successfully', res.data.data.user.photo);
       userNameEl.innerHTML = res.data.data.user.name.split(' ')[0];
       userPhoto.src = `/img/users/${res.data.data.user.photo}`;
       navUserPhoto.src = `/img/users/${res.data.data.user.photo}`;
