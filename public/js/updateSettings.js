@@ -17,7 +17,15 @@ export const updateSettings = async (data, type) => {
     });
 
     if (res.data.status === 'success') {
+      const userNameEl = document.querySelector('.nav__user-name');
+      const userPhoto = document.querySelector('.form__user-photo');
+      const navUserPhoto = document.querySelector('.nav__user-img');
+
       showAlert('success', `${type.toUpperCase()} updated successfully!`);
+      console.log('some data updated successfully', res.data.data.user.photo);
+      userNameEl.innerHTML = res.data.data.user.name.split(' ')[0];
+      userPhoto.src = `/img/users/${res.data.data.user.photo}`;
+      navUserPhoto.src = `/img/users/${res.data.data.user.photo}`;
     }
   } catch (err) {
     showAlert('error', err.response.data.message);

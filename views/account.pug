@@ -31,7 +31,7 @@ block content
           h2.heading-secondary.ma-bt-md Your account settings
           
           //- WITHOUT API
-          //- form.form.form-user-data(action='/submit-user-data' method='POST' enctype='multipart/form-data')
+          //- form.form.form-user-data(action='/submit-user-data' method='POST')
           
           //- WITH API
           form.form.form-user-data
@@ -45,7 +45,6 @@ block content
               img.form__user-photo(src=`/img/users/${user.photo}`, alt='User photo')
               input.form__upload(type='file', accept='image/*', id='photo', name='photo')
               label(for='photo') Choose new photo
-              
             .form__group.right
               button.btn.btn--small.btn--green Save settings
               
