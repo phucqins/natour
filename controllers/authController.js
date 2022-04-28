@@ -20,7 +20,9 @@ const createSendToken = (user, statusCode, req, res) => {
       Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
     ),
     httpOnly: true,
-    secure: req.secure || req.headers['x-forwarded-proto'] === 'https'
+    secure: req.secure || req.headers['x-forwarded-proto'] === 'https',
+    sameSite: 'none'
+    // secure: true
   });
 
   // Remove password from output
@@ -42,8 +44,11 @@ exports.signup = catchAsync(async (req, res, next) => {
     password: req.body.password,
     passwordConfirm: req.body.passwordConfirm
   });
+  //for server side rendering page
+  // const url = `${req.protocol}://${req.get('host')}/me`;
 
-  const url = `${req.protocol}://${req.get('host')}/me`;
+  //for restapi client side rendering page
+  const url = `http://localhost:3001/me`;
   // console.log(url);
   await new Email(newUser, url).sendWelcome();
 
@@ -95,7 +100,9 @@ exports.protect = catchAsync(async (req, res, next) => {
   }
 
   // 2) Verification token
+  console.log('token', token);
   const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
+  console.log('decoded', decoded);
 
   // 3) Check if user still exists
   const currentUser = await User.findById(decoded.id);
@@ -229,6 +236,7 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
 exports.updatePassword = catchAsync(async (req, res, next) => {
   // 1) Get user from collection
   const user = await User.findById(req.user.id).select('+password');
+  console.log(user);
 
   // 2) Check if POSTed current password is correct
   if (!(await user.correctPassword(req.body.passwordCurrent, user.password))) {

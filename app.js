@@ -10,6 +10,7 @@ const hpp = require('hpp');
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
 const compression = require('compression');
+const { shouldSendSameSiteNone } = require('should-send-same-site-none');
 const cors = require('cors');
 
 const AppError = require('./utils/appError');
@@ -32,6 +33,8 @@ app.set('views', path.join(__dirname, 'views'));
 // 1) GLOBAL MIDDLEWARES
 // Implement CORS
 app.use(cors());
+// Apply middleware before routes
+app.use(shouldSendSameSiteNone);
 // Access-Control-Allow-Origin *
 // api.natours.com, front-end natours.com
 // app.use(cors({
@@ -72,7 +75,7 @@ app.post(
 
 // Body parser, reading data from body into req.body
 app.use(express.json({ limit: '10kb' })); //if the body is larger than 10kb, it will not be accepted
-app.use(express.urlencoded({ extended: true, limit: '10kb'}));
+app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 app.use(cookieParser());
 
 // Data sanitization against NoSQL query injection
@@ -105,6 +108,7 @@ app.use((req, res, next) => {
 });
 
 // 3) ROUTES
+
 app.use('/', viewRouter);
 app.use('/api/v1/tours', tourRouter);
 app.use('/api/v1/users', userRouter);

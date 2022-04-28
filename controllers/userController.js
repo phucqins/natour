@@ -1,20 +1,35 @@
 const multer = require('multer');
-const sharp = require('sharp');
+const multerS3 = require('multer-sharp-s3');
+const aws = require('aws-sdk');
+
 const User = require('./../models/userModel');
 const catchAsync = require('./../utils/catchAsync');
 const AppError = require('./../utils/appError');
 const factory = require('./handlerFactory');
 
-// const multerStorage = multer.diskStorage({
-//   destination: (req, file, cb) => {
-//     cb(null, 'public/img/users');
-//   },
-//   filename: (req, file, cb) => {
-//     const ext = file.mimetype.split('/')[1];
-//     cb(null, `user-${req.user.id}-${Date.now()}.${ext}`);
-//   }
-// });
-const multerStorage = multer.memoryStorage();
+aws.config.update({
+  secretAccessKey: process.env.AWS_SECRET_ACCESS,
+  accessKeyId: process.env.AWS_ACCESS_ID,
+  region: 'ap-southeast-1'
+});
+
+const multerStorage = multerS3({
+  s3: new aws.S3(),
+  Bucket: 'natours',
+  Key: (req, file, cb) => {
+    console.log(req.user);
+    console.log('before', file.originalname);
+    file.originalname = `user-${req.user.id}-${Date.now()}`;
+    console.log('after', file.originalname);
+    cb(null, file.originalname);
+  },
+  resize: {
+    width: 500,
+    height: 500
+  },
+  toFormat: 'jpeg',
+  ACL: 'public-read'
+});
 
 const multerFilter = (req, file, cb) => {
   if (file.mimetype.startsWith('image')) {
@@ -31,16 +46,12 @@ const upload = multer({
 
 exports.uploadUserPhoto = upload.single('photo');
 
-exports.resizeUserPhoto = catchAsync(async (req, res, next) => {
-  if (!req.file) return next();
-
-  req.file.filename = `user-${req.user.id}-${Date.now()}.jpeg`;
-
-  await sharp(req.file.buffer)
-    .resize(500, 500)
-    .toFormat('jpeg')
-    .jpeg({ quality: 90 })
-    .toFile(`public/img/users/${req.file.filename}`);
+exports.saveUserPhotoFileName = catchAsync(async (req, res, next) => {
+  if (!req.file) {
+    console.log('not have file');
+    return next();
+  }
+  console.log(req.file);
 
   next();
 });
@@ -71,7 +82,8 @@ exports.updateMe = catchAsync(async (req, res, next) => {
 
   // 2) Filtered out unwanted fields names that are not allowed to be updated
   const filteredBody = filterObj(req.body, 'name', 'email');
-  if (req.file) filteredBody.photo = req.file.filename;
+  if (req.file) filteredBody.photo = req.file.originalname;
+  console.log(req.body);
 
   // 3) Update user document
   const updatedUser = await User.findByIdAndUpdate(req.user.id, filteredBody, {
